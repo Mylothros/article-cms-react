@@ -1,0 +1,64 @@
+.article {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .title-section {
+    .title {
+      font-size: 28px;
+      color: #ffffff;
+      text-align: center;
+    }
+  }
+
+  .text-section {
+    .text {
+      font-size: 16px;
+      color: #ffffff;
+      line-height: 1.6;
+    }
+  }
+
+  .image-section {
+    display: flex;
+    justify-content: space-between;
+
+    .image-container {
+      flex-basis: 30%;
+      max-width: 30%;
+
+      img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+    }
+  }
+}
+
+.grid-titlePage {
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.gridPage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.article-cardPage {
+  background-color: #0039a6;
+  padding: 20px;
+  border-radius: 8px;
+  &:hover {
+      transform: scale(1.10);
+      transition: transform 0.4s ease;
+      cursor: pointer;
+    }
+}

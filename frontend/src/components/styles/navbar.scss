@@ -1,0 +1,27 @@
+.navbar {
+  background-color: #29323c;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 1.5px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  padding: 0;
+
+  li {
+    margin-right: 20px;
+
+    a {
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: bold;
+
+      &:hover {
+      color: #0039a6;
+      }
+    }
+  }
+}
