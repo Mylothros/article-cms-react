@@ -2,6 +2,17 @@
 
 This is a Content Management System (CMS) for articles. It consists of a frontend and a backend, built with React.js and Express.js respectively. The app uses MySQL as the database for storing articles and create articles relationships. Dockerfiles are provided for both the frontend and backend, and a Docker Compose file is included to compose the containers.
 
+## Table of Contents
+
+- [Features](#features)
+- [Tools and Technologies Used](#tools-and-technologies-used)
+- [Requirements](#requirements)
+- [Installation and Setup](#installation-and-setup)
+- [Usage](#usage)
+- [Additional Information](#additional-information)
+- [Tutorial](#tutorial)
+
+
 ## Features
 
 - Interface for managing articles
@@ -92,3 +103,19 @@ This is a Content Management System (CMS) for articles. It consists of a fronten
 - After clicking an article you can view their details and see the related articles
 
 I hope this helps you understand how a CMS works. Of course, in a real-world scenario, you would need to implement user authentication with a username and password to grant administrative access. However, the focus here is to understand the architecture and functionality behind the application.
+
+## Tutorial
+
+First of all, you need to add three articles that will be related to themselves. These articles are dummy dat, because I have not added all the restrictions to have a fully working project, so you should add the number 1 three times in the text field labeled Είδος and do the same for 2 and 3. Once you have completed this, you can add related articles for each of the existing articles. 
+(I should have included a button to list the available articles to prevent from adding related articles that do not exist. However, for the purpose of understanding the logic, do all of this to see magic happen). ;)
+
+Here are the steps you should follow:
+
+![add-dummy-article1](./images/image1.jpg)
+![add-dummy-article2](./images/image2.jpg)
+![add-dummy-article3](./images/image3.jpg)
+![add-article4](./images/image4.jpg)
+![add-article5](./images/image5.jpg)
+![show-article-page](./images/image6.jpg)
+![show-article5](./images/image7.jpg)
+![show-article4](./images/image8.jpg)
