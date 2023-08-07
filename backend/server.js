@@ -1,6 +1,8 @@
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 
 const app = express();
@@ -25,7 +27,39 @@ connection.connect((err) => {
     }
 });
 
+// you should add a table for this ofcourse its for tesing purpose
+const users = [
+    {
+      id: 1,
+      username: 'charalampos',
+      password: '$2a$10$vOiz/wfKO.KAthKRG./uXebO.BPlGWjyEZ6nW7wGG.OpyS3DKI34a', //password: "charalampos"
+    }
+  ];
+
 app.use(bodyParser.json());
+
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = users.find((u) => u.username === username);
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Compare passwords
+    bcrypt.compare(password, user.password, (err, result) => {
+    if (err) {
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+
+    if (!result) {
+        return res.status(401).json({ message: 'Authentication failed. Invalid password.' });
+    }
+    //after 1 hour the site will ask for login
+    const token = jwt.sign({ userId: user.id }, 'your_secret_key', { expiresIn: '1h' });
+        return res.status(200).json({ token });
+    });
+});
 
 app.post('/api/articles', (req, res) => {
     var sql = `CREATE TABLE IF NOT EXISTS articles ( 

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 import './styles/hero.scss';
 
 const Hero = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    image_path: '',
-    content: '',
-    date: '',
-    tags: ['', '', '']
+  const storedToken = localStorage.getItem('token');
+  const [authenticated, setAuthenticated] = useState(storedToken);
+  const [isToken, setIsToken] = useState(false);
+  const [loginFormData, setLoginFormData] = useState({
+    username: '',
+    password: '',
   });
   const [errorMessageName, setErrorMessageName] = useState('');
   const [errorMessageSlug, setErrorMessageSlug] = useState('');
@@ -18,11 +18,60 @@ const Hero = () => {
   const [errorMessageDate, setErrorMessageDate] = useState('');
   const [errorMessageTags, setErrorMessageTags] = useState('');
 
+  const handleLoginInputChange = (event) => {
+    const { name, value } = event.target;
+    setLoginFormData({ ...loginFormData, [name]: value });
+  };
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      const response = await axios.post('http://localhost:3307/api/login', loginFormData);
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+      setIsToken(true);
+    } catch (error) {
+      alert(error.response.data.message);
+    }
+  };
+
+  const checkTokenExpiration = () => {
+    const stored = localStorage.getItem('token');
+    if (stored) {
+      const decoded = jwtDecode(stored);
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (decoded.exp > currentTime) {
+        setAuthenticated(true);
+      } else {
+        localStorage.removeItem('token');
+        setAuthenticated(false);
+      }
+    } else {
+      setAuthenticated(false);
+    }
+  }
+
+  useEffect(() => {
+    checkTokenExpiration();
+    const interval = setInterval(checkTokenExpiration, 60000);
+    return () => clearInterval(interval);
+  }, [isToken]);
+
+  const [formData, setformData] = useState({
+    name: '',
+    slug: '',
+    image_path: '',
+    content: '',
+    date: '',
+    tags: ['', '', ''],
+  });
+
   useEffect(() => {
     if (formData.name !== '') {
       setErrorMessageName('');
     }
-    if (formData.slugs !== '') {
+    if (formData.slug !== '') {
       setErrorMessageSlug('');
     }
     if (formData.image_path !== '') {
@@ -38,16 +87,17 @@ const Hero = () => {
       setErrorMessageTags('');
     }
   }, [formData]);
-
+  
   const handleInput = (event) => {
     const { name, value } = event.target;
-    setFormData({ ...formData, [name]: value });
+    setformData({ ...formData, [name]: value });
   };
   const handleTags = (index, event) => {
     const newTags = [...formData.tags];
     newTags[index] = event.target.value;
-    setFormData({ ...formData, tags: newTags });
+    setformData({ ...formData, tags: newTags });
   };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     if (formData.name === '') {
@@ -77,6 +127,37 @@ const Hero = () => {
         console.error('Error creating article:', error);
       });
   };
+
+  if (!authenticated) {
+    return (
+      <section className="hero">
+        <div className="container2">
+          <h1>Login</h1>
+          <form onSubmit={handleLoginSubmit}>
+            <div>
+              <label>Username:</label>
+              <input
+                type="text"
+                name="username"
+                value={loginFormData.username}
+                onChange={handleLoginInputChange}
+              />
+            </div>
+            <div>
+              <label>Password:</label>
+              <input
+                type="password"
+                name="password"
+                value={loginFormData.password}
+                onChange={handleLoginInputChange}
+              />
+            </div>
+            <button type="submit">Login</button>
+          </form>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="hero">
