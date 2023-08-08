@@ -45,10 +45,12 @@ const loginLimiter = rateLimit({
 app.use(bodyParser.json());
 
 const authenticateToken = (req, res, next) => {
+    // we use the ?. so if the header is not provided the code will still continue to work so we wont have any error
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-    return res.status(401).json({ message: 'Authentication token not provided.' });
+        return res.status(401).json({ message: 'Authentication token not provided.' });
     }
+    //reseting the tries to login
     loginLimiter.resetKey(req.ip);
     jwt.verify(token, 'your_secret_key', (err, user) => {
     if (err) {

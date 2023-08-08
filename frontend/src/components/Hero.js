@@ -4,7 +4,7 @@ import jwtDecode from 'jwt-decode';
 import './styles/hero.scss';
 
 const Hero = () => {
-  //it would be more safe to use Http Only cookies for the token
+  //it would be more safe to use Http Only cookies for the token in the backed so the token wont be reachable with javascript with Cross-Site Scripting (XSS) attacks. 
   const [storedToken, setStoredToken] = useState(localStorage.getItem('token'));
   const [isToken, setIsToken] = useState(false);
   const [loginFormData, setLoginFormData] = useState({

@@ -2,6 +2,8 @@
 
 This is a Content Management System (CMS) for articles. It consists of a frontend and a backend, built with React.js and Express.js respectively. The app uses MySQL as the database for storing articles and create articles relationships. Dockerfiles are provided for both the frontend and backend, and a Docker Compose file is included to compose the containers.
 
+For the admin page, a secure login form is implemented, utilizing JSON Web Tokens (JWT) for authentication and authorization in the backend. This approach ensures that only authorized users can access the admin functionalities of the CMS. The JWT token, generated upon successful login, is stored in the frontend using the localStorage mechanism. While this approach is functional for learning purposes in this example, it's important to note that more secure storage options, such as HttpOnly cookies, are recommended for production systems.
+
 ## Table of Contents
 
 - [Features](#features)
