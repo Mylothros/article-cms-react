@@ -4,19 +4,53 @@ import jwtDecode from 'jwt-decode';
 import './styles/hero.scss';
 
 const Hero = () => {
-  const storedToken = localStorage.getItem('token');
-  const [authenticated, setAuthenticated] = useState(storedToken);
+  //it would be more safe to use Http Only cookies for the token
+  const [storedToken, setStoredToken] = useState(localStorage.getItem('token'));
   const [isToken, setIsToken] = useState(false);
   const [loginFormData, setLoginFormData] = useState({
     username: '',
     password: '',
   });
+  const [waitForTimer, setWaitForTimer] = useState(false);
+  const [remainingTime, setRemainingTime] = useState();
   const [errorMessageName, setErrorMessageName] = useState('');
   const [errorMessageSlug, setErrorMessageSlug] = useState('');
   const [errorMessageImage, setErrorMessageImage] = useState('');
   const [errorMessageContent, setErrorMessageContent] = useState('');
   const [errorMessageDate, setErrorMessageDate] = useState('');
   const [errorMessageTags, setErrorMessageTags] = useState('');
+
+  const axiosInstance = axios.create({
+    baseURL: 'http://localhost:3307/api',
+  }); 
+
+  const sendHeaders = () => {
+    const token = localStorage.getItem('token');
+    if(token)
+    {
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  const checkTokenExpiration = () => {
+    const stored = localStorage.getItem('token');
+    if (stored) {
+      const decoded = jwtDecode(stored);
+      const currentTime = Math.floor(Date.now() / 1000) + 3600;
+      if (decoded.exp < currentTime) {
+        console.log("hello")
+        localStorage.removeItem('token');
+        window.alert('Your time has passed you should login again to continue');
+        setStoredToken(null);
+      }
+    }
+  }
+
+  useEffect(() => {
+    checkTokenExpiration();
+    const interval = setInterval(checkTokenExpiration, 3600000);
+    return () => clearInterval(interval);
+  }, [isToken]);
 
   const handleLoginInputChange = (event) => {
     const { name, value } = event.target;
@@ -25,38 +59,29 @@ const Hero = () => {
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
-
     try {
-      const response = await axios.post('http://localhost:3307/api/login', loginFormData);
+      const response = await axiosInstance.post('/login', loginFormData);
       const { token } = response.data;
       localStorage.setItem('token', token);
+      setStoredToken(token);
       setIsToken(true);
     } catch (error) {
-      alert(error.response.data.message);
+      if(error.response.data.message) {
+        alert(error.response.data.message);     
+      }
+      else {
+        setWaitForTimer(true);
+        setRemainingTime(0.1 * 60 * 1000);
+        const timer = setInterval(() => {
+          setRemainingTime(prev => prev - 1000);
+        }, 1000);
+        setTimeout(() => {
+          setWaitForTimer(false);
+          clearInterval(timer);
+        }, 0.1 * 60 * 1000); 
+      }
     }
   };
-
-  const checkTokenExpiration = () => {
-    const stored = localStorage.getItem('token');
-    if (stored) {
-      const decoded = jwtDecode(stored);
-      const currentTime = Math.floor(Date.now() / 1000);
-      if (decoded.exp > currentTime) {
-        setAuthenticated(true);
-      } else {
-        localStorage.removeItem('token');
-        setAuthenticated(false);
-      }
-    } else {
-      setAuthenticated(false);
-    }
-  }
-
-  useEffect(() => {
-    checkTokenExpiration();
-    const interval = setInterval(checkTokenExpiration, 60000);
-    return () => clearInterval(interval);
-  }, [isToken]);
 
   const [formData, setformData] = useState({
     name: '',
@@ -98,7 +123,7 @@ const Hero = () => {
     setformData({ ...formData, tags: newTags });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (formData.name === '') {
       setErrorMessageName('Mandatory Field!');
@@ -118,17 +143,23 @@ const Hero = () => {
     if (formData.tags[0] === '' || formData.tags[1] === '' || formData.tags[2] === '') {
       setErrorMessageTags('Mandatory Fields!');
     }
-    axios
-      .post('http://localhost:3307/api/articles', formData)
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error('Error creating article:', error);
-      });
+    try {
+      sendHeaders();
+      const response = await axiosInstance.post('/articles', formData)
+      alert(response.data);
+    } catch (error) {
+      console.error('Error creating article:', error);
+    }
+  };
+  
+  const handleLogout = async () => {
+    sendHeaders();
+    await axiosInstance.post('/logout'); 
+    localStorage.removeItem('token');
+    setStoredToken(null);
   };
 
-  if (!authenticated) {
+  if (!storedToken) {
     return (
       <section className="hero">
         <div className="container2">
@@ -152,7 +183,14 @@ const Hero = () => {
                 onChange={handleLoginInputChange}
               />
             </div>
-            <button type="submit">Login</button>
+            {waitForTimer ? (<p>Time remaining to try to login again: {Math.ceil(remainingTime / 1000)} seconds</p>) 
+            : (
+              <button
+                type="submit"
+              >
+                Login
+              </button>
+            )}
           </form>
         </div>
       </section>
@@ -250,6 +288,7 @@ const Hero = () => {
             <button type="submit">Submit</button>
           </div>
         </form>
+        <button onClick={handleLogout}>Logout</button>
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const port = 3307;
@@ -27,7 +28,7 @@ connection.connect((err) => {
     }
 });
 
-// you should add a table for this ofcourse its for tesing purpose
+// you should add a table for this of course its for tesing purpose
 const users = [
     {
       id: 1,
@@ -36,32 +37,58 @@ const users = [
     }
   ];
 
+const loginLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 3 // attempts
+});
+
 app.use(bodyParser.json());
 
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
+const authenticateToken = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+    return res.status(401).json({ message: 'Authentication token not provided.' });
+    }
+    loginLimiter.resetKey(req.ip);
+    jwt.verify(token, 'your_secret_key', (err, user) => {
+    if (err) {
+        return res.status(403).json({ message: 'Invalid or expired token.' });
+    }
+    req.user = user;
+    next();
+    });
+};
+
+const handleLogin = (username, password, res) => {
     const user = users.find((u) => u.username === username);
 
     if (!user) {
         return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Compare passwords
     bcrypt.compare(password, user.password, (err, result) => {
-    if (err) {
+        if (err) {
         return res.status(500).json({ message: 'Internal server error.' });
-    }
+        }
 
-    if (!result) {
+        if (!result) {
         return res.status(401).json({ message: 'Authentication failed. Invalid password.' });
-    }
-    //after 1 hour the site will ask for login
-    const token = jwt.sign({ userId: user.id }, 'your_secret_key', { expiresIn: '1h' });
+        }
+        // After 1 hour the site will ask for login
+        const token = jwt.sign({ userId: user.id }, 'your_secret_key', { expiresIn: '1h' });
         return res.status(200).json({ token });
     });
+};
+  
+app.post('/api/login', loginLimiter, (req, res) => {
+    const { username, password } = req.body;
+    if (req.rateLimit && req.rateLimit.remaining === 0) {
+        return res.status(429).json({ message: 'Dont push it fellow, try again in 10 minutes :)' });
+    }
+    handleLogin(username, password, res);
 });
 
-app.post('/api/articles', (req, res) => {
+app.post('/api/articles', authenticateToken, (req, res) => {
     var sql = `CREATE TABLE IF NOT EXISTS articles ( 
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
@@ -190,6 +217,11 @@ const createRelatedArticles = (itemId, tagsStringified) => {
         }
     });
 };
+
+app.post('/api/logout', authenticateToken,(req, res) => {
+    res.send('Logged out');
+});
+
 app.listen(port, () => {
   console.log(`Server is on HOHOHOHO ${port}`);
 });
